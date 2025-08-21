@@ -8,66 +8,66 @@ public class LicenseManager : MonoBehaviour
 {
     private string filePath;
 
-    public GameObject EndCanvas; // ¶óÀÌ¼±½º ¸¸·á ½Ã Ç¥½ÃÇÒ UI Äµ¹ö½º
+    public GameObject EndCanvas; // ë¼ì´ì„ ìŠ¤ ë§Œë£Œ ì‹œ í‘œì‹œí•  UI ìº”ë²„ìŠ¤
 
     void Start()
     {
-        // ¾Èµå·ÎÀÌµå Æ÷ÇÔ ¸ğµç ÇÃ·§Æû¿¡¼­ ¾ÈÀüÇÑ ÀúÀå °æ·Î ¼³Á¤
+        // ì•ˆë“œë¡œì´ë“œ í¬í•¨ ëª¨ë“  í”Œë«í¼ì—ì„œ ì•ˆì „í•œ ì €ì¥ ê²½ë¡œ ì„¤ì •
         filePath = Path.Combine(Application.persistentDataPath, ".sys_lic.dat");
 
         try
         {
             if (!File.Exists(filePath))
             {
-                // ÃÖÃÊ ½ÇÇàÀÏÀ» UTC ±âÁØÀ¸·Î ISO 8601 Çü½Ä ÀúÀå (¿¹: 2025-08-20T13:45:00Z)
-                string nowUtc = DateTime.UtcNow.ToString("o"); // 'o'´Â ISO 8601 Æ÷¸Ë
+                // ìµœì´ˆ ì‹¤í–‰ì¼ì„ UTC ê¸°ì¤€ìœ¼ë¡œ ISO 8601 í˜•ì‹ ì €ì¥ (ì˜ˆ: 2025-08-20T13:45:00Z)
+                string nowUtc = DateTime.UtcNow.ToString("o"); // 'o'ëŠ” ISO 8601 í¬ë§·
                 File.WriteAllText(filePath, nowUtc);
-                Debug.Log("ÃÖÃÊ ½ÇÇàÀÏ ÀúÀå ¿Ï·á");
+                Debug.Log("ìµœì´ˆ ì‹¤í–‰ì¼ ì €ì¥ ì™„ë£Œ");
 
             }
             else
             {
-                // ÀúÀåµÈ ³¯Â¥ ÀĞ±â
+                // ì €ì¥ëœ ë‚ ì§œ ì½ê¸°
                 string savedDateStr = File.ReadAllText(filePath);
 
-                // ISO Çü½ÄÀ¸·Î ÆÄ½Ì
+                // ISO í˜•ì‹ìœ¼ë¡œ íŒŒì‹±
                 DateTime savedDate = DateTime.Parse(savedDateStr, null, System.Globalization.DateTimeStyles.RoundtripKind);
 
                 /*double daysElapsed = (DateTime.UtcNow - savedDate).TotalDays;
 
                 if (daysElapsed > 365)
                 {
-                    Debug.Log("»ç¿ë ±â°£ÀÌ ¸¸·áµÇ¾ú½À´Ï´Ù!");
-                    EndCanvas.transform.GetComponentInChildren<Button>().onClick.AddListener(() => Application.Quit()); // ¹öÆ° Å¬¸¯ ½Ã ¾Û Á¾·á
-                    EndCanvas.SetActive(true); // ¶óÀÌ¼±½º ¸¸·á UI È°¼ºÈ­
+                    Debug.Log("ì‚¬ìš© ê¸°ê°„ì´ ë§Œë£Œë˜ì—ˆìŠµë‹ˆë‹¤!");
+                    EndCanvas.transform.GetComponentInChildren<Button>().onClick.AddListener(() => Application.Quit()); // ë²„íŠ¼ í´ë¦­ ì‹œ ì•± ì¢…ë£Œ
+                    EndCanvas.SetActive(true); // ë¼ì´ì„ ìŠ¤ ë§Œë£Œ UI í™œì„±í™”
                 }
                 else
                 {
                     int daysLeft = 365 - (int)daysElapsed;
-                    Debug.Log("dat ÆÄÀÏ ³»¿ë: " + savedDateStr);
-                    Debug.Log($"³²Àº »ç¿ëÀÏ: {daysLeft}ÀÏ");
+                    Debug.Log("dat íŒŒì¼ ë‚´ìš©: " + savedDateStr);
+                    Debug.Log($"ë‚¨ì€ ì‚¬ìš©ì¼: {daysLeft}ì¼");
                 }*/
 
-                // º¯°æ: 'ÀÏ'ÀÌ ¾Æ´Ï¶ó '½Ã°£' ´ÜÀ§·Î °æ°ú ½Ã°£ °è»ê
+                // ë³€ê²½: 'ì¼'ì´ ì•„ë‹ˆë¼ 'ì‹œê°„' ë‹¨ìœ„ë¡œ ê²½ê³¼ ì‹œê°„ ê³„ì‚°
                 TimeSpan elapsed = DateTime.UtcNow - savedDate;
                 double hoursElapsed = elapsed.TotalHours;
-                if (hoursElapsed > 0.5)
+                if (hoursElapsed > 1.0)
                 {
-                    Debug.Log("»ç¿ë ±â°£ÀÌ ¸¸·áµÇ¾ú½À´Ï´Ù! (±âÁØ: ÃÖÃÊ ½ÇÇà ÈÄ 1½Ã°£)");
+                    Debug.Log("ì‚¬ìš© ê¸°ê°„ì´ ë§Œë£Œë˜ì—ˆìŠµë‹ˆë‹¤! (ê¸°ì¤€: ìµœì´ˆ ì‹¤í–‰ í›„ 1ì‹œê°„)");
                     if (EndCanvas != null)
                     {
                         Button quitBtn = EndCanvas.transform.GetComponentInChildren<Button>();
                         if (quitBtn != null)
-                            quitBtn.onClick.AddListener(() => Application.Quit()); // ¹öÆ° Å¬¸¯ ½Ã ¾Û Á¾·á
-                        EndCanvas.SetActive(true); // ¶óÀÌ¼±½º ¸¸·á UI È°¼ºÈ­
+                            quitBtn.onClick.AddListener(() => Application.Quit()); // ë²„íŠ¼ í´ë¦­ ì‹œ ì•± ì¢…ë£Œ
+                        EndCanvas.SetActive(true); // ë¼ì´ì„ ìŠ¤ ë§Œë£Œ UI í™œì„±í™”
                     }
                 }
                 else
                 {
                     TimeSpan remain = TimeSpan.FromHours(1) - elapsed;
                     
-                    // UI¿¡ ³²Àº ½Ã°£ Ãâ·Â (TextMeshPro)
-                    string remainText = $"³²Àº ½Ã°£: {Mathf.Max(0, (int)remain.TotalMinutes)}ºĞ {Mathf.Max(0, remain.Seconds)}ÃÊ";
+                    // UIì— ë‚¨ì€ ì‹œê°„ ì¶œë ¥ (TextMeshPro)
+                    string remainText = $"ë‚¨ì€ ì‹œê°„: {Mathf.Max(0, (int)remain.TotalMinutes)}ë¶„ {Mathf.Max(0, remain.Seconds)}ì´ˆ";
                     GameObject textObj = GameObject.Find("TextLeft");
                     if (textObj != null)
                     {
@@ -78,22 +78,23 @@ public class LicenseManager : MonoBehaviour
                         }
                         else
                         {
-                            Debug.LogWarning("TextLeft ¿ÀºêÁ§Æ®¿¡ TMP_Text ÄÄÆ÷³ÍÆ®°¡ ¾ø½À´Ï´Ù!");
+                            Debug.LogWarning("TextLeft ì˜¤ë¸Œì íŠ¸ì— TMP_Text ì»´í¬ë„ŒíŠ¸ê°€ ì—†ìŠµë‹ˆë‹¤!");
                         }
                     }
                     else
                     {
-                        Debug.LogWarning("¾À¿¡ 'TextLeft' ¿ÀºêÁ§Æ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                        Debug.LogWarning("ì”¬ì— 'TextLeft' ì˜¤ë¸Œì íŠ¸ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
                     }
 
-                    Debug.Log("dat ÆÄÀÏ ³»¿ë: " + savedDateStr);
-                    Debug.Log($"³²Àº ½Ã°£: {Mathf.Max(0, (int)remain.TotalMinutes)}ºĞ {(int)remain.Seconds}ÃÊ");
+                    Debug.Log("dat íŒŒì¼ ë‚´ìš©: " + savedDateStr);
+                    Debug.Log($"ë‚¨ì€ ì‹œê°„: {Mathf.Max(0, (int)remain.TotalMinutes)}ë¶„ {(int)remain.Seconds}ì´ˆ");
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"¶óÀÌ¼±½º ÆÄÀÏ Ã³¸® Áß ¿À·ù ¹ß»ı: {ex.Message}");
+            Debug.LogError($"ë¼ì´ì„ ìŠ¤ íŒŒì¼ ì²˜ë¦¬ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {ex.Message}");
         }
     }
 }
+
