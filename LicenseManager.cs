@@ -3,6 +3,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 public class LicenseManager : MonoBehaviour
 {
@@ -19,17 +20,21 @@ public class LicenseManager : MonoBehaviour
     [SerializeField] private Button CodeEnterButton;          // CodeEnterButton
     [SerializeField] private Button CloseCodePopupButton;     // CloseCodePopupButton
 
-    [Header("리셋 코드")]
-    [SerializeField] private string ResetCode = "123456";     // 인스펙터에서 수정 가능
+    private float licenseDurationHours = 0.1f; // 라이센스 제공 기간, 1 = 1h, 1년(8760시간)
 
-    // ▼ 추가: 만료 기준을 '시간' 단위로 변경
-    private float licenseDurationHours = 0.1f; // 기본 1년(8760시간) 365f * 24f
+
+    // ★ 추가: 흔들기(삐빅) 연출 파라미터
+    [SerializeField] private float shakeDuration = 0.4f;
+    [SerializeField] private float shakeStrength = 20f;
+    [SerializeField] private int shakeVibrato = 20;
+    [SerializeField] private float shakeRandomness = 90f;
 
     void Start()
     {
+        //숨겨진 데이터 파일 경로 설정
         filePath = Path.Combine(Application.persistentDataPath, ".sys_lic.dat");
 
-        // 연결이 비어 있으면 계층 이름으로 자동 바인딩 (요청하신 명칭 사용)
+        // 연결이 비어 있으면 계층 이름으로 자동 바인딩
         AutoBindIfNull();
 
         // 패널 기본 비활성화
@@ -63,31 +68,11 @@ public class LicenseManager : MonoBehaviour
             string savedDateStr = File.ReadAllText(filePath);
             DateTime savedDate = DateTime.Parse(savedDateStr, null, System.Globalization.DateTimeStyles.RoundtripKind);
 
-            /*double daysElapsed = (DateTime.UtcNow - savedDate).TotalDays;
-
-            if (daysElapsed > 365)
-            {
-                Debug.Log("사용 기간이 만료되었습니다!");
-                if (EndCanvas != null)
-                {
-                    var quitBtn = EndCanvas.transform.GetComponentInChildren<Button>();
-                    if (quitBtn != null) quitBtn.onClick.AddListener(() => Application.Quit());
-                    EndCanvas.SetActive(true);
-                }
-            }
-            else
-            {
-                int daysLeft = 365 - (int)daysElapsed;
-                Debug.Log($"dat 파일 내용: {savedDateStr}");
-                Debug.Log($"남은 사용일: {daysLeft}일");
-                if (EndCanvas != null) EndCanvas.SetActive(false); // 유효하면 만료 UI 숨김
-            }*/
-
-            // 변경: '일'이 아니라 '시간' 단위로 경과 시간 계산
+            // 시간 단위로 경과 시간 계산
             TimeSpan elapsed = DateTime.UtcNow - savedDate;
             double hoursElapsed = elapsed.TotalHours;
 
-            // ▼ 변경: 하드코딩(0.1h)이 아닌 변수(licenseDurationHours)로 만료 판단
+            // licenseDurationHours로 만료 판단
             if (hoursElapsed > licenseDurationHours)
             {
                 Debug.Log("사용 기간이 만료되었습니다! (변경 기준 적용)");
@@ -101,12 +86,11 @@ public class LicenseManager : MonoBehaviour
             }
             else
             {
-                // ▼ 변경: 설정한 만료 시간 기준으로 남은 시간 계산/출력
+                // 설정한 만료 시간 기준으로 남은 시간 계산/출력
                 TimeSpan remain = TimeSpan.FromHours(licenseDurationHours) - elapsed;
 
-                // UI에 남은 시간 출력 (TextMeshPro)
+                // 디버그 로그 출력
                 string remainText = $"남은 시간: {Mathf.Max(0, remain.Days)}일 {Mathf.Max(0, remain.Hours)}시간 {Mathf.Max(0, remain.Minutes):00}분 {Mathf.Max(0, remain.Seconds):00}초";
-
                 Debug.Log("dat 파일 내용: " + savedDateStr);
                 Debug.Log(remainText);
 
@@ -119,24 +103,8 @@ public class LicenseManager : MonoBehaviour
         }
     }
 
-    private void WireUpButtons()
-    {
-        if (ReUseButton != null)
-            ReUseButton.onClick.AddListener(() =>
-            {
-                if (ReusePanel != null) ReusePanel.SetActive(true);
-            });
 
-        if (CloseCodePopupButton != null)
-            CloseCodePopupButton.onClick.AddListener(() =>
-            {
-                if (ReusePanel != null) ReusePanel.SetActive(false);
-            });
-
-        if (CodeEnterButton != null)
-            CodeEnterButton.onClick.AddListener(OnClickEnterCode);
-    }
-
+    // 코드 입력 후 확인버튼 처리
     private void OnClickEnterCode()
     {
         string input = CodeInputField != null ? CodeInputField.text?.Trim() : string.Empty;
@@ -147,7 +115,7 @@ public class LicenseManager : MonoBehaviour
             return;
         }
 
-        if (input == ResetCode)
+        if (input == GetTodayCodeKST())
         {
             try
             {
@@ -171,12 +139,33 @@ public class LicenseManager : MonoBehaviour
         else
         {
             Debug.LogWarning("코드가 올바르지 않습니다.");
+            // ★ 추가: 입력 실패 시 InputField 비우기
+            if (CodeInputField != null) CodeInputField.text = string.Empty;
+
+            // ★ 추가: ReusePanel을 DOTween으로 흔들기(삐빅 느낌)
+            if (ReusePanel != null)
+            {
+                var rt = ReusePanel.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    // 중복 트윈 방지
+                    rt.DOKill(true);
+                    // 좌우 흔들림
+                    rt.DOShakeAnchorPos(0.4f, new Vector2(20f, 0f), 20, 90f);
+                }
+                else
+                {
+                    // UI가 아니라 일반 Transform일 경우 포지션 흔들기
+                    ReusePanel.transform.DOKill(true);
+                    ReusePanel.transform.DOShakePosition(0.4f, new Vector2(20f, 0f), 20, 90f);
+                }
+            }
         }
     }
 
+    // 자동 바인딩 메서드: 연결이 비어 있으면 계층 이름으로 자동 바인딩
     private void AutoBindIfNull()
     {
-        // 계층 이름 기반 자동 찾기 (이미 드래그 연결했다면 무시)
         if (ReusePanel == null) ReusePanel = GameObject.Find("ReusePanel");
         if (ReUseButton == null)
         {
@@ -203,5 +192,44 @@ public class LicenseManager : MonoBehaviour
             var go = GameObject.Find("LicensePanel");
             if (go != null) LicensePanel = go;
         }
+    }
+
+    //버튼 리스너 설정
+    private void WireUpButtons()
+    {
+        if (ReUseButton != null)
+            ReUseButton.onClick.AddListener(() =>
+            {
+                if (ReusePanel != null) ReusePanel.SetActive(true);
+            });
+
+        if (CloseCodePopupButton != null)
+            CloseCodePopupButton.onClick.AddListener(() =>
+            {
+                if (ReusePanel != null) ReusePanel.SetActive(false);
+            });
+
+        if (CodeEnterButton != null)
+            CodeEnterButton.onClick.AddListener(OnClickEnterCode);
+    }
+
+    // 한국 날짜 기반 일일 코드 생성 규칙 적용 (한국 날짜 8자리에 각 숫자 자리수 i만큼 뒤로 이동)
+    private string GetTodayCodeKST()
+    {
+        // UTC+9(표준시간+9시간) 직접 계산
+        DateTime nowKST = DateTime.UtcNow.AddHours(9);
+
+        string dateStr = nowKST.ToString("yyyyMMdd");   // 오늘 날짜 자동으로 string으로 변환 (예: 20250822)
+        char[] outDigits = new char[dateStr.Length];    // 출력용 문자 배열
+
+        for (int i = 0; i < dateStr.Length; i++)
+        {
+            int digit = dateStr[i] - '0';      // 0~9
+            int shifted = digit - (i + 1);     // 자리수(1부터)만큼 뒤로 이동
+            shifted = ((shifted % 10) + 10) % 10; // 음수 안전 모듈러(0~9로 순환)
+            outDigits[i] = (char)('0' + shifted);
+        }
+
+        return new string(outDigits);
     }
 }
