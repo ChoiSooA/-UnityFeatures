@@ -15,19 +15,13 @@ public class LicenseManager : MonoBehaviour
     [Header("리셋(재활용) UI 요소")]
     [SerializeField] private GameObject LicensePanel;   // LicensePanel
     [SerializeField] private GameObject ReusePanel;          // ReusePanel
-    [SerializeField] private Button ReUseButton;              // ReUseButton
-    [SerializeField] private TMP_InputField CodeInputField;   // CodeInputField
-    [SerializeField] private Button CodeEnterButton;          // CodeEnterButton
-    [SerializeField] private Button CloseCodePopupButton;     // CloseCodePopupButton
+    [SerializeField] private Button ReUseButton;              // ReUseButton, green, right, 재활성화
+    [SerializeField] private Button QuitButton;         // QuitButton, red, left, 종료
+    [SerializeField] private TMP_InputField CodeInputField;   // CodeInputField, '코드를 입력하세요...', max length = 8, type : pin
+    [SerializeField] private Button CodeEnterButton;          // CodeEnterButton,  blue, 입력
+    [SerializeField] private Button CloseCodePopupButton;     // CloseCodePopupButton, red, 닫기
 
-    private float licenseDurationHours = 0.1f; // 라이센스 제공 기간, 1 = 1h, 1년(8760시간)
-
-
-    // ★ 추가: 흔들기(삐빅) 연출 파라미터
-    [SerializeField] private float shakeDuration = 0.4f;
-    [SerializeField] private float shakeStrength = 20f;
-    [SerializeField] private int shakeVibrato = 20;
-    [SerializeField] private float shakeRandomness = 90f;
+    private float licenseDurationHours = 8760f; // 라이센스 제공 기간, 1 = 1h, 1년(8760시간)
 
     void Start()
     {
@@ -78,9 +72,6 @@ public class LicenseManager : MonoBehaviour
                 Debug.Log("사용 기간이 만료되었습니다! (변경 기준 적용)");
                 if (EndCanvas != null)
                 {
-                    Button quitBtn = EndCanvas.transform.GetComponentInChildren<Button>();
-                    if (quitBtn != null)
-                        quitBtn.onClick.AddListener(() => Application.Quit()); // 버튼 클릭 시 앱 종료
                     EndCanvas.SetActive(true); // 라이선스 만료 UI 활성화
                 }
             }
@@ -139,10 +130,10 @@ public class LicenseManager : MonoBehaviour
         else
         {
             Debug.LogWarning("코드가 올바르지 않습니다.");
-            // ★ 추가: 입력 실패 시 InputField 비우기
+            // 입력 실패 시 InputField 비우기
             if (CodeInputField != null) CodeInputField.text = string.Empty;
-
-            // ★ 추가: ReusePanel을 DOTween으로 흔들기(삐빅 느낌)
+            Handheld.Vibrate();
+            // ReusePanel을 DOTween으로 흔들기(삐빅 느낌)
             if (ReusePanel != null)
             {
                 var rt = ReusePanel.GetComponent<RectTransform>();
@@ -171,6 +162,11 @@ public class LicenseManager : MonoBehaviour
         {
             var go = GameObject.Find("ReUseButton") ?? GameObject.Find("ReuseButton"); // 오타 대비
             if (go != null) ReUseButton = go.GetComponent<Button>();
+        }
+        if (QuitButton == null)
+        {
+            var go = GameObject.Find("QuitButton");
+            if (go != null) QuitButton = go.GetComponent<Button>();
         }
         if (CodeInputField == null)
         {
@@ -211,9 +207,16 @@ public class LicenseManager : MonoBehaviour
 
         if (CodeEnterButton != null)
             CodeEnterButton.onClick.AddListener(OnClickEnterCode);
+        if (QuitButton != null)
+        {
+            QuitButton.onClick.AddListener(() => {
+                Debug.Log("종료 버튼 눌림");
+                Application.Quit();
+            });
+        }
     }
 
-    // 한국 날짜 기반 일일 코드 생성 규칙 적용 (한국 날짜 8자리에 각 숫자 자리수 i만큼 뒤로 이동)
+    // 한국 날짜 기반 일일 코드 생성 규칙 (한국 날짜 8자리에 각 숫자 자리수 i만큼 뒤로 이동)
     private string GetTodayCodeKST()
     {
         // UTC+9(표준시간+9시간) 직접 계산
