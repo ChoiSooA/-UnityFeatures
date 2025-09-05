@@ -1,0 +1,24 @@
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    public UserData userData; // UserData.asset 연결
+
+    void Start()
+    {
+        // 실행 시 저장된 JSON 불러와서 ScriptableObject에 덮어쓰기
+        SaveLoadManager.Load(userData);
+
+        Debug.Log($"현재 유저: {userData.playerName}, 상태: {userData.nowState}");
+
+        // 예시: 값 변경
+        userData.playerName = "Alice";
+        userData.nowState++;
+    }
+
+    void OnApplicationQuit()
+    {
+        // 종료 시 ScriptableObject 데이터를 JSON으로 저장
+        SaveLoadManager.Save(userData);
+    }
+}
