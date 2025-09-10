@@ -29,7 +29,14 @@ public class GameManager : MonoBehaviour
     void OnApplicationQuit()
     {
         // 종료 시 ScriptableObject 데이터를 JSON으로 저장
-        SaveLoadManager.Save(userData);
+        if (userData.playerName == "Default"||userData.playerName=="")
+        {
+            return;
+        }
+        else
+        {
+            SaveLoadManager.Save(userData);
+        }
     }
 
     public string getName()
