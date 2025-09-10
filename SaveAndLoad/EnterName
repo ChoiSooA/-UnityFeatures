@@ -1,0 +1,45 @@
+using System.Collections;
+using System.IO;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class EnterName : MonoBehaviour
+{
+    [SerializeField] TMP_InputField nameInputField;  //이름을 입력받을 InputField
+    [SerializeField] Button nameButton;              //이름을 저장할 Button
+    private void Start()
+    {
+        setUI();
+        nameButton.onClick.AddListener(clickSave);
+
+        // 파일이 있으면 JSON 데이터 불러오기
+        if (File.Exists(Path.Combine(Application.persistentDataPath, "userdata.json")))
+        {
+            nameInputField.text = GameManager.Instance.userData.playerName;
+        }
+    }
+
+    void setUI()
+    {
+        if(nameInputField != null ) { return; }
+        nameInputField = GameObject.Find("NameInputField").GetComponent<TMP_InputField>();
+        if (nameButton != null) { return; }
+        nameButton = GameObject.Find("NameButton").GetComponent<Button>();
+    }
+
+    void clickSave()
+    {
+        if (!string.IsNullOrWhiteSpace(nameInputField.text)) { 
+            GameManager.Instance.setName(nameInputField.text);
+            SaveLoadManager.Save(GameManager.Instance.userData);
+        }
+        else
+        {
+            TMPro.TMP_Text namewarning = GameObject.Find("Placeholder").GetComponent<TMPro.TMP_Text>();
+            /*namewarning.text = "이름을 입력하세요!!";
+            namewarning.color = Color.red;*/
+            placeholder.color = Color.red;
+        }
+    }
+}
