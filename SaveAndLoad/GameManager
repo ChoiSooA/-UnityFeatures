@@ -2,23 +2,42 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public UserData userData; // UserData.asset 연결
+    public static GameManager Instance { get; private set; }
 
-    void Start()
+    private void Awake()
     {
+        // 이미 인스턴스가 있으면 자기 자신 파괴
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // 싱글톤 인스턴스 지정
+        Instance = this;
+
+        // 씬 전환에도 안 없어지게 설정
+        DontDestroyOnLoad(gameObject);
+
         // 실행 시 저장된 JSON 불러와서 ScriptableObject에 덮어쓰기
         SaveLoadManager.Load(userData);
-
-        Debug.Log($"현재 유저: {userData.playerName}, 상태: {userData.nowState}");
-
-        // 예시: 값 변경
-        userData.playerName = "Alice";
-        userData.nowState++;
     }
+
+    public UserData userData; // UserData.asset 연결
 
     void OnApplicationQuit()
     {
         // 종료 시 ScriptableObject 데이터를 JSON으로 저장
+        SaveLoadManager.Save(userData);
+    }
+
+    public string getName()
+    {
+        return userData.name;
+    }
+    public void setName(string newName)
+    {
+        userData.name = newName;
         SaveLoadManager.Save(userData);
     }
 }
